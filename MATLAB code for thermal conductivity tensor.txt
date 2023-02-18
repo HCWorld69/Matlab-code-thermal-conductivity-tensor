@@ -1,0 +1,99 @@
+Here is my generalized approximate MATLAB code for calculating the lattice thermal conductivity tensor based on the equation provided:
+
+
+
+% Define input parameters
+N0 = % Number of unit cells in the crystal
+Omega = % Volume of unit cell
+q_list = % List of all wave vectors
+s_list = % List of all phonon modes
+hbar = % Reduced Planck's constant
+w_list = % List of phonon frequencies for all wave vectors
+psi = % Matrix of eigenvectors for all wave vectors and modes
+n_bar = % Matrix of Bose-Einstein distribution for all wave vectors and modes
+c_list = % List of phonon group velocities for all wave vectors and modes
+T_grad = % Gradient of temperature field, 3D array with x, y, and z components
+
+% Calculate the denominator of the expression
+T_grad_norm = sqrt(sum(T_grad.^2, 4)); % Compute the norm of the gradient
+T_grad_norm_sq = T_grad_norm.^2;
+denom = N0 * Omega * T_grad_norm_sq;
+
+% Initialize the conductivity tensor
+K = zeros(3, 3);
+
+% Loop over i and j indices
+for i = 1:3
+    for j = 1:3
+        % Calculate the numerator of the expression
+        num = 0;
+        for q_index = 1:length(q_list)
+            for s_index = 1:length(s_list)
+                % Compute the contribution to the numerator from each phonon mode
+                w = w_list(q_index, s_index);
+                psi_qn = psi(:, :, q_index, s_index);
+                n_bar_qs = n_bar(q_index, s_index);
+                c_i_qs = c_list(i, :, q_index, s_index);
+                num_qs = hbar * w * psi_qn' * (n_bar_qs * (n_bar_qs + 1)) * c_i_qs' * T_grad(:, :, :, j);
+                
+                % Accumulate the total numerator for all phonon modes
+                num = num + num_qs;
+            end
+        end
+        
+        % Compute the conductivity tensor element
+        K(i, j) = -num / denom;
+    end
+end
+
+
+
+%{
+%%% example u can run 
+
+% Define example input parameters
+N0 = 10^23; % Number of unit cells in the crystal
+Omega = 10^-28; % Volume of unit cell (m^3)
+q_list = linspace(0, 1, 100); % List of all wave vectors
+s_list = 1:3; % List of all phonon modes
+hbar = 1.0546e-34; % Reduced Planck's constant (J.s)
+w_list = ones(length(q_list), length(s_list)) * 10^13; % List of phonon frequencies for all wave vectors (Hz)
+psi = rand(3, 3, length(q_list), length(s_list)); % Matrix of eigenvectors for all wave vectors and modes
+n_bar = ones(length(q_list), length(s_list)); % Matrix of Bose-Einstein distribution for all wave vectors and modes
+c_list = rand(3, 3, length(q_list), length(s_list)); % List of phonon group velocities for all wave vectors and modes (m/s)
+T_grad = ones(10, 10, 10, 3) * 10; % Gradient of temperature field, 3D array with x, y, and z components (K/m)
+
+% Calculate the denominator of the expression
+T_grad_norm = sqrt(sum(T_grad.^2, 4)); % Compute the norm of the gradient
+T_grad_norm_sq = T_grad_norm.^2;
+denom = N0 * Omega * T_grad_norm_sq;
+
+% Initialize the conductivity tensor
+K = zeros(3, 3);
+
+% Loop over i and j indices
+for i = 1:3
+    for j = 1:3
+        % Calculate the numerator of the expression
+        num = 0;
+        for q_index = 1:length(q_list)
+            for s_index = 1:length(s_list)
+                % Compute the contribution to the numerator from each phonon mode
+                w = w_list(q_index, s_index);
+                psi_qn = psi(:, :, q_index, s_index);
+                n_bar_qs = n_bar(q_index, s_index);
+                c_i_qs = c_list(i, :, q_index, s_index);
+                num_qs = hbar * w * psi_qn' * (n_bar_qs * (n_bar_qs + 1)) * c_i_qs' * T_grad(:, :, :, j);
+                
+                % Accumulate the total numerator for all phonon modes
+                num = num + num_qs;
+            end
+        end
+        
+        % Compute the conductivity tensor element
+        K(i, j) = -num / denom;
+    end
+end
+
+
+}
